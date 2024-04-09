@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'accounts',
     'fabry_perot',
     'michelson',
+    'pendulum'
 ]
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'

@@ -12,4 +12,5 @@ urlpatterns = [
     path('accounts/', include('accounts.urls')),
     path('fabry-perot/', include('fabry_perot.urls')),
     path('michelson/', include('michelson.urls')),
+    path('pendulum/', include('pendulum.urls'))
 ]

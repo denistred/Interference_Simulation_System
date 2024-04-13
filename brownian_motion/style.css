@@ -1,0 +1,7 @@
+body {
+    overflow: hidden;
+}
+.particle {
+    background-color: red;
+    position: absolute;
+}

@@ -4,7 +4,7 @@ class Physics {
 
         this.updateTimer = setInterval(
             () => this.update(this.circles),
-            1000 / 60
+            1000 / 10
         );
     }
 
@@ -109,7 +109,6 @@ class Physics {
             2;
         return ySpeed;
     }
-    
 }
 
 class Particle {
@@ -154,10 +153,10 @@ class Particle {
         let top = this.getY();
         let containerWidth = window.innerWidth;
         let containerHeight = this.container.offsetHeight;
-    
+
         this.element.style.left = left + this.speedX + "px";
         this.element.style.top = top + this.speedY + "px";
-    
+
         if (left + this.size > containerWidth) {
             this.element.style.left = containerWidth - this.size + "px";
             this.speedX = -this.speedX;
@@ -175,7 +174,6 @@ class Particle {
             this.speedY = -this.speedY;
         }
     }
-    
 }
 
 let getXPos = () => {
@@ -190,12 +188,19 @@ let getSpeed = () => {
 let particles = [];
 for (let i = 0; i < 30; i++) {
     particles.push(
-        new Particle(document.getElementById("particle-container"), getXPos(), getYPos(), getSpeed(), getSpeed(), 50)
+        new Particle(
+            document.getElementById("particle-container"),
+            getXPos(),
+            getYPos(),
+            getSpeed(),
+            getSpeed(),
+            50
+        )
     );
 }
 const game = new Physics(particles);
 
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", function () {
     const particleCountInput = document.getElementById("particle-count");
     const particleSizeInput = document.getElementById("particle-size");
 
@@ -203,57 +208,67 @@ document.addEventListener("DOMContentLoaded", function() {
     const continueBtn = document.getElementById("continueBtn");
     const stopBtn = document.getElementById("stopBtn");
 
-
-    particleCountInput.addEventListener("change", function() {
+    let prevCount = 30;
+    particleCountInput.addEventListener("change", function () {
         const newParticleCount = parseInt(this.value);
-        particles.forEach(particle => particle.element.remove());
-        particles = [];
-        for (let i = 0; i < newParticleCount; i++) {
-            particles.push(
-                new Particle(
-                    document.getElementById("particle-container"), 
-                    getXPos(), 
-                    getYPos(), 
-                    getSpeed(), 
-                    getSpeed(), 
-                    50
-                )
-            );
+        let particleDelta = prevCount - newParticleCount;
+        if (particleDelta > 0) {
+            while (particleDelta) {
+                particles[0].element.remove();
+                particles.shift();
+                particleDelta--;
+            }
+        } else {
+            particleDelta = -particleDelta;
+            while (particleDelta) {
+                particles.push(
+                    new Particle(
+                        document.getElementById("particle-container"),
+                        getXPos(),
+                        getYPos(),
+                        getSpeed(),
+                        getSpeed(),
+                        50
+                    )
+                );
+                particleDelta--;
+            }
         }
+        prevCount = newParticleCount;
         game.circles = particles;
     });
 
-    particleSizeInput.addEventListener("change", function() {
+    particleSizeInput.addEventListener("change", function () {
         const newSize = parseInt(this.value);
-        particles.forEach(particle => {
+        particles.forEach((particle) => {
             particle.setSize(newSize);
         });
     });
 
-    continueBtn.addEventListener("click", function() {
-        particles.forEach(particle => {
+    continueBtn.addEventListener("click", function () {
+        particles.forEach((particle) => {
             particle.speedX = getSpeed();
             particle.speedY = getSpeed();
         });
     });
 
-    stopBtn.addEventListener("click", function() {
-        particles.forEach(particle => {
+    stopBtn.addEventListener("click", function () {
+        particles.forEach((particle) => {
             particle.speedX = 0;
             particle.speedY = 0;
         });
     });
 
-    temperatureInput.addEventListener("input", function() {
+    temperatureInput.addEventListener("input", function () {
         const newTemperature = parseFloat(this.value);
         const newSpeed = calculateSpeed(newTemperature);
-        particles.forEach(particle => {
-            particle.speedX = newSpeed;
-            particle.speedY = newSpeed;
+        particles.forEach((particle) => {
+            particle.coefficientX = newSpeed;
+            particle.coefficientY = newSpeed;
         });
     });
 
     function calculateSpeed(temperature) {
-        return temperature * 0.5; 
+        return temperature * 0.5;
     }
 });

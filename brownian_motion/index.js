@@ -6,7 +6,7 @@ class Grid {
         let cells = [];
         this.cells = cells;
         // Инициализация сетки
-        for (var i = 0; i < this.width / this.cellSize + 1; i++) {
+        for (var i = 0; i < parseInt(this.width / this.cellSize) + 1; i++) {
             this.cells[i] = [];
             for (
                 var j = 0;
@@ -20,8 +20,8 @@ class Grid {
 
     // Метод для добавления объекта в ячейку сетки
     addObject(object, x, y) {
-        const cellX = Math.floor(x / this.cellSize);
-        const cellY = Math.floor(y / this.cellSize);
+        const cellX = Math.abs(Math.floor(x / this.cellSize));
+        const cellY = Math.abs(Math.floor(y / this.cellSize));
         this.cells[cellX][cellY].push(object);
     }
 
@@ -67,7 +67,7 @@ class Physics {
         this.grid = new Grid(
             window.innerWidth,
             this.container.offsetHeight,
-            10
+            20
         );
 
         this.updateTimer = setInterval(
@@ -124,11 +124,6 @@ class Physics {
                             neighbor,
                             angle
                         );
-                        console.log(
-                            "FIRST SPEEDD",
-                            circle.speedX,
-                            circle.speedY
-                        );
                         neighbor.speedX = this.getNewXSpeed(
                             neighbor,
                             circle,
@@ -138,11 +133,6 @@ class Physics {
                             neighbor,
                             circle,
                             angle
-                        );
-                        console.log(
-                            "SECOND SPEEDD",
-                            neighbor.speedX,
-                            neighbor.speedY
                         );
                     }
                 }

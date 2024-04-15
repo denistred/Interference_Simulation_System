@@ -1,49 +1,155 @@
+class Grid {
+    constructor(width, height, cellSize) {
+        this.width = width;
+        this.height = height;
+        this.cellSize = cellSize;
+        let cells = [];
+        this.cells = cells;
+        // Инициализация сетки
+        for (var i = 0; i < this.width / this.cellSize + 1; i++) {
+            this.cells[i] = [];
+            for (
+                var j = 0;
+                j < parseInt(this.height / this.cellSize) + 1;
+                j++
+            ) {
+                this.cells[i][j] = [];
+            }
+        }
+    }
+
+    // Метод для добавления объекта в ячейку сетки
+    addObject(object, x, y) {
+        const cellX = Math.floor(x / this.cellSize);
+        const cellY = Math.floor(y / this.cellSize);
+        this.cells[cellX][cellY].push(object);
+    }
+
+    // Метод для получения объектов в заданной области
+    getObjectsInArea(x, y, radius) {
+        const objects = [];
+        const startX = Math.max(0, Math.floor((x - radius) / this.cellSize));
+        const startY = Math.max(0, Math.floor((y - radius) / this.cellSize));
+        const endX = Math.min(
+            this.width - 1,
+            Math.floor((x + radius) / this.cellSize)
+        );
+        const endY = Math.min(
+            this.height - 1,
+            Math.floor((y + radius) / this.cellSize)
+        );
+
+        for (let cellX = startX; cellX <= endX; cellX++) {
+            for (let cellY = startY; cellY <= endY; cellY++) {
+                if (this.cells[cellX][cellY] != null) {
+                    objects.push(...this.cells[cellX][cellY]);
+                }
+            }
+        }
+        return objects;
+    }
+
+    // Метод для очистки сетки
+    clear() {
+        for (let x = 0; x < this.width / this.cellSize; x++) {
+            for (let y = 0; y < parseInt(this.height / this.cellSize); y++) {
+                this.cells[x][y] = [];
+            }
+        }
+    }
+}
+
 class Physics {
-    constructor(circles) {
+    constructor(container, circles) {
         this.circles = circles;
+
+        this.container = container;
+        this.grid = new Grid(
+            window.innerWidth,
+            this.container.offsetHeight,
+            10
+        );
 
         this.updateTimer = setInterval(
             () => this.update(this.circles),
-            1000 / 10
+            1000 / 60
         );
     }
+    fillGrid() {
+        particles.forEach((particle) => {
+            this.grid.addObject(particle, particle.getX(), particle.getY());
+        });
+    }
 
+    clearGrid() {
+        this.grid.clear();
+    }
     /**
      * Updates the positions and velocities of all circles in the game.
      * @param {Array<Circle>} circles - An array of all circles in the game.
      */
-    update(circles) {
-        for (let i = 0; i < circles.length; i++) {
-            for (let j = i + 1; j < circles.length; j++) {
-                if (this.distance(circles[j], circles[i]) < circles[i].size) {
-                    let angle = this.getAngleOfCollision(
-                        circles[j],
-                        circles[i]
-                    );
-                    circles[i].speedX = this.getNewXSpeed(
-                        circles[i],
-                        circles[j],
-                        angle
-                    );
-                    circles[i].speedY = this.getNewYSpeed(
-                        circles[i],
-                        circles[j],
-                        angle
-                    );
-                    circles[j].speedX = -this.getNewXSpeed(
-                        circles[j],
-                        circles[i],
-                        angle
-                    );
-                    circles[j].speedY = -this.getNewYSpeed(
-                        circles[j],
-                        circles[i],
-                        angle
-                    );
+    update = (circles) => {
+        this.grid.clear();
+        // Добавляем все круги в сетку
+        circles.forEach((circle) => {
+            const x = circle.getX();
+            const y = circle.getY();
+            this.grid.addObject(circle, x, y);
+        });
+
+        // Проходимся по каждому кругу и проверяем столкновения только с объектами в той же или соседних ячейках
+        for (const circle of circles) {
+            // Получаем список объектов в той же или соседних ячейках
+            const neighbors = this.grid.getObjectsInArea(
+                circle.getX() - circle.size / 2,
+                circle.getY() - circle.size / 2,
+                circle.size
+            );
+
+            // Проверяем столкновения только с объектами в сетке
+            for (const neighbor of neighbors) {
+                if (
+                    neighbor !== circle &&
+                    this.distance(neighbor, circle) < circle.size
+                ) {
+                    let angle = this.getAngleOfCollision(circle, neighbor);
+                    if (this.distance(circle, neighbor) < circle.size) {
+                        circle.speedX = -this.getNewXSpeed(
+                            circle,
+                            neighbor,
+                            angle
+                        );
+                        circle.speedY = -this.getNewYSpeed(
+                            circle,
+                            neighbor,
+                            angle
+                        );
+                        console.log(
+                            "FIRST SPEEDD",
+                            circle.speedX,
+                            circle.speedY
+                        );
+                        neighbor.speedX = this.getNewXSpeed(
+                            neighbor,
+                            circle,
+                            angle
+                        );
+                        neighbor.speedY = this.getNewYSpeed(
+                            neighbor,
+                            circle,
+                            angle
+                        );
+                        console.log(
+                            "SECOND SPEEDD",
+                            neighbor.speedX,
+                            neighbor.speedY
+                        );
+                    }
                 }
             }
         }
-    }
+    };
+
     /**
      * Calculates the distance between two objects.
      * @param {Object} obj1 - The first object.
@@ -132,7 +238,11 @@ class Particle {
         this.speedX = speedX;
         this.speedY = speedY;
 
-        this.updateTimer = setInterval(() => this.update(), 1000 / 60);
+        this.containerWidth = window.innerWidth;
+        this.containerHeight = this.container.offsetHeight;
+
+        // this.updateTimer = setInterval(() => this.update(), 1000 / 60);
+        this.update();
     }
     setSize(size) {
         this.size = size;
@@ -148,32 +258,31 @@ class Particle {
         return Number(this.element.style.top.slice(0, -2));
     }
 
-    update() {
+    update = () => {
         let left = this.getX();
         let top = this.getY();
-        let containerWidth = window.innerWidth;
-        let containerHeight = this.container.offsetHeight;
 
         this.element.style.left = left + this.speedX + "px";
         this.element.style.top = top + this.speedY + "px";
 
-        if (left + this.size > containerWidth) {
-            this.element.style.left = containerWidth - this.size + "px";
+        if (left + this.size > this.containerWidth) {
+            this.element.style.left = this.containerWidth - this.size + "px";
             this.speedX = -this.speedX;
         }
         if (left < 0) {
             this.element.style.left = 0;
             this.speedX = -this.speedX;
         }
-        if (top + this.size > containerHeight) {
-            this.element.style.top = containerHeight - this.size + "px";
+        if (top + this.size > this.containerHeight) {
+            this.element.style.top = this.containerHeight - this.size + "px";
             this.speedY = -this.speedY;
         }
         if (top < 0) {
             this.element.style.top = 0;
             this.speedY = -this.speedY;
         }
-    }
+        requestAnimationFrame(this.update);
+    };
 }
 
 let getXPos = () => {
@@ -198,7 +307,10 @@ for (let i = 0; i < 30; i++) {
         )
     );
 }
-const physics = new Physics(particles);
+const physics = new Physics(
+    document.getElementById("particle-container"),
+    particles
+);
 
 document.addEventListener("DOMContentLoaded", function () {
     const particleCountInput = document.getElementById("particle-count");

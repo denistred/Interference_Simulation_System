@@ -228,15 +228,12 @@ class Particle {
         this.speedX = speedX;
         this.speedY = speedY;
 
-
         this.modal = document.createElement("div");
 
         this.modal.className = "modal";
 
         this.content = document.createElement("div");
         this.content.className = "modal-content";
-
-            // this.container.appendChild(this.modal);
 
         this.containerWidth = window.innerWidth;
         this.containerHeight = this.container.offsetHeight;
@@ -250,7 +247,6 @@ class Particle {
             this.backToOriginalColor();
         });
 
-        // this.updateTimer = setInterval(() => this.update(), 1000 / 60);
         this.update();
     }
     setSize(size) {
@@ -272,12 +268,11 @@ class Particle {
         this.content.innerHTML = `
         <p> Скорость X: ${this.speedX}</p>
         <p> Скорость Y: ${this.speedY}</p>
-        <p> Температура: ${this.coefficientX, this.coefficientY}</p>
-        `
+        <p> Температура: ${(this.coefficientX, this.coefficientY)}</p>
+        `;
         this.modal.appendChild(this.content);
         document.body.appendChild(this.modal);
         this.modal.style.display = "block";
-        
     }
 
     highlightParticle() {
@@ -338,7 +333,7 @@ for (let i = 0; i < 30; i++) {
             getYPos(),
             getSpeed(),
             getSpeed(),
-            52
+            50
         )
     );
 }
@@ -384,7 +379,6 @@ document.addEventListener("DOMContentLoaded", function () {
         prevCount = newParticleCount;
         physics.circles = particles;
     });
-
 
     particleSizeInput.addEventListener("change", function () {
         const newSize = parseInt(this.value);

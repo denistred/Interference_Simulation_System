@@ -1,8 +1,10 @@
 body {
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    height: 100vh;
+    height: 100%;
+    width: 100%;
+    flex: 1;
+
 }
 
 .content {

@@ -27,21 +27,47 @@
         .options {
             flex: 1;
             background-color: #f8f9fa;
-            padding: 20px;
             border-radius: 10px;
             margin-right: 20px;
+            margin-top: 350px;
+            position: absolute;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            flex-direction: column;
+            left: 0;
+            padding: 0px 40px 0px 40px;
         }
-        .graph {
-            flex: 3;
+        .graph_wrapper{
+            display: flex;
+            position: absolute;
+            width: 100%;   
+            top: 20;
+            left: 0;
+            padding: 0px 20px 0px 20px;
+            flex-direction: column;
+        }
+        .graph{
+            padding: 0px 20px 0px 20px;
+            border: 1px solid #000;
+            border-radius: 10px;
+            height: auto;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        .graph_options{
             padding: 20px;
             border: 1px solid #000;
             border-radius: 10px;
-
         }
     
         h2 {
             font-size: 24px;
-            margin-bottom: 20px;
+            align-self: center;
+
         }
         .parameter-item {
             margin-bottom: 10px;
@@ -94,13 +120,15 @@
 </head>
 <body>
     <div class="container">
-        <div id="id_graph" class="graph" style="height: 500px;">
+        <div class="graph_wrapper">
             <h2>График</h2>
-            <canvas class="img" id="canvas"></canvas>
+            <div id="id_graph" class="graph">
+                <canvas class="img" id="canvas" style="width: 100%;"></canvas>
+            </div>
         </div>
         <div id="id_options" class="options">
             <h2>Параметры</h2>
-            <div class="graph">
+            <div id="id_graph_options"class="graph_options">
                 <div class="parameter-item period flex">
                     <h4>Длина маятника</h4>
                     <input

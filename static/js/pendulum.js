@@ -14,8 +14,8 @@ class App {
             console.log("context not found");
         }
 
-        this.canvas.width = canvas.offsetWidth;
-        this.canvas.height = canvas.offsetHeight;
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
 
         this.lengthE1 = document.getElementById("_length");
         if (this.lengthE1) {

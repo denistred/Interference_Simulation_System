@@ -198,7 +198,7 @@ for (let i = 0; i < 30; i++) {
         )
     );
 }
-const game = new Physics(particles);
+const physics = new Physics(particles);
 
 document.addEventListener("DOMContentLoaded", function () {
     const particleCountInput = document.getElementById("particle-count");
@@ -228,14 +228,14 @@ document.addEventListener("DOMContentLoaded", function () {
                         getYPos(),
                         getSpeed(),
                         getSpeed(),
-                        50
+                        parseInt(particleSizeInput.value)
                     )
                 );
                 particleDelta--;
             }
         }
         prevCount = newParticleCount;
-        game.circles = particles;
+        physics.circles = particles;
     });
 
     particleSizeInput.addEventListener("change", function () {

@@ -280,7 +280,7 @@ class Particle {
     }
 
     backToOriginalColor() {
-        this.element.style.backgroundColor = "red";
+        this.element.style.backgroundColor = "rgb(0, 0, 255)";
     }
 
     hideModal() {
@@ -294,6 +294,28 @@ class Particle {
 
         this.element.style.left = left + this.speedX + "px";
         this.element.style.top = top + this.speedY + "px";
+
+        if (this.element.style.backgroundColor !== "green") {
+            // Smoothly transition between colors from blue to red based on a variable
+            const colorChangeSpeed = 10; // Adjust the speed of color change as needed
+            const currentColor =
+                this.element.style.backgroundColor || "rgb(0, 0, 255)";
+            const redValue = Math.floor(255 * Math.abs(this.speedX));
+            const blueValue = Math.floor(255 * Math.abs(1 / this.speedX));
+            const targetColor = `rgb(${redValue}, 0, ${blueValue})`; // Dynamic target color
+            const currentColorRGB = currentColor.match(/\d+/g).map(Number);
+            const targetColorRGB = targetColor.match(/\d+/g).map(Number);
+            const newColorRGB = currentColorRGB.map((color, index) => {
+                const difference = targetColorRGB[index] - color;
+                const change =
+                    Math.sign(difference) *
+                    Math.min(colorChangeSpeed, Math.abs(difference));
+                return color + change;
+            });
+            this.element.style.backgroundColor = `rgb(${newColorRGB.join(
+                ", "
+            )})`;
+        }
 
         if (left + this.size > this.containerWidth) {
             this.element.style.left = this.containerWidth - this.size + "px";

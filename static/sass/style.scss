@@ -166,10 +166,8 @@ button {
 }
 
 .container {
-    max-width: 1170px;
     margin-left: auto;
     margin-right: auto;
-    padding: 0 1rem;
 }
 
 .header {
@@ -413,9 +411,9 @@ input::-webkit-inner-spin-button {
     margin: 0; /* <-- Apparently some margin are still there even though it's hidden */
 }
 
-@media screen and (max-width: 1170px) {
+@media screen {
     .container {
-        padding: 0 1rem;
+        padding: 0;
     }
     .main-content {
         flex-direction: column;

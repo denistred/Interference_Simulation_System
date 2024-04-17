@@ -6,12 +6,11 @@ class Grid {
         let cells = [];
         this.cells = cells;
         // Инициализация сетки
-        console.log(this.width, this.cellSize);
-        for (var i = 0; i < parseInt(this.width / this.cellSize) + 2; i++) {
+        for (var i = 0; i < parseInt(this.width / this.cellSize) + 10; i++) {
             this.cells[i] = [];
             for (
                 var j = 0;
-                j < parseInt(this.height / this.cellSize) + 2;
+                j < parseInt(this.height / this.cellSize) + 10;
                 j++
             ) {
                 this.cells[i][j] = [];
@@ -114,29 +113,54 @@ class Physics {
                     this.distance(neighbor, circle) < circle.size
                 ) {
                     let angle = this.getAngleOfCollision(circle, neighbor);
-                    if (this.distance(circle, neighbor) < circle.size) {
-                        circle.speedX = -this.getNewXSpeed(
-                            circle,
-                            neighbor,
-                            angle
-                        );
-                        circle.speedY = -this.getNewYSpeed(
-                            circle,
-                            neighbor,
-                            angle
-                        );
-                        neighbor.speedX = this.getNewXSpeed(
-                            neighbor,
-                            circle,
-                            angle
-                        );
-                        neighbor.speedY = this.getNewYSpeed(
-                            neighbor,
-                            circle,
-                            angle
-                        );
-                        console.log("collision");
-                    }
+                    circle.speedX = this.getNewXSpeed(circle, neighbor, angle);
+                    circle.speedY = this.getNewYSpeed(circle, neighbor, angle);
+                    neighbor.speedX = this.getNewXSpeed(
+                        neighbor,
+                        circle,
+                        angle
+                    );
+                    neighbor.speedY = this.getNewYSpeed(
+                        neighbor,
+                        circle,
+                        angle
+                    );
+                    // circle.speedX = this.calculateCollision(
+                    //     circle.speedX,
+                    //     circle.speedY,
+                    //     neighbor.speedX,
+                    //     neighbor.speedY,
+                    //     circle.mass,
+                    //     neighbor.mass,
+                    //     angle
+                    // ).v1x;
+                    // circle.speedY = this.calculateCollision(
+                    //     circle.speedX,
+                    //     circle.speedY,
+                    //     neighbor.speedX,
+                    //     neighbor.speedY,
+                    //     circle.mass,
+                    //     neighbor.mass,
+                    //     angle
+                    // ).v1y;
+                    // neighbor.speedX = this.calculateCollision(
+                    //     circle.speedX,
+                    //     circle.speedY,
+                    //     neighbor.speedX,
+                    //     neighbor.speedY,
+                    //     circle.mass,
+                    //     neighbor.mass,
+                    //     angle
+                    // ).v2x;
+                    // neighbor.speedY = this.calculateCollision(
+                    //     circle.speedX,
+                    //     circle.speedY,
+                    //     neighbor.speedX,
+                    //     neighbor.speedY,
+                    //     circle.mass,
+                    //     neighbor.mass,
+                    //     angle
+                    // ).v2y;
                 }
             }
         }
@@ -171,6 +195,48 @@ class Physics {
         }
         return angle;
     }
+    calculateCollision(v1x, v1y, v2x, v2y, m1, m2, angle) {
+        // Переводим угол в радианы
+        let radianAngle = (angle * Math.PI) / 180;
+
+        // Вычисляем скорости вдоль оси столкновения
+        let v1n = v1x * Math.cos(radianAngle) + v1y * Math.sin(radianAngle);
+        let v2n = v2x * Math.cos(radianAngle) + v2y * Math.sin(radianAngle);
+
+        // Вычисляем новые скорости после столкновения (по оси столкновения)
+        let u1n = (v1n * (m1 - m2) + 2 * m2 * v2n) / (m1 + m2);
+        let u2n = (v2n * (m2 - m1) + 2 * m1 * v1n) / (m1 + m2);
+
+        // Вычисляем скорости после столкновения вдоль оси перпендикулярной столкновению (остаются неизменными)
+        let u1t =
+            v1x * Math.cos(radianAngle - Math.PI / 2) +
+            v1y * Math.sin(radianAngle - Math.PI / 2);
+        let u2t =
+            v2x * Math.cos(radianAngle - Math.PI / 2) +
+            v2y * Math.sin(radianAngle - Math.PI / 2);
+
+        // Обратно преобразуем скорости после столкновения
+        let u1x =
+            u1n * Math.cos(radianAngle) +
+            u1t * Math.cos(radianAngle - Math.PI / 2);
+        let u1y =
+            u1n * Math.sin(radianAngle) +
+            u1t * Math.sin(radianAngle - Math.PI / 2);
+        let u2x =
+            u2n * Math.cos(radianAngle) +
+            u2t * Math.cos(radianAngle - Math.PI / 2);
+        let u2y =
+            u2n * Math.sin(radianAngle) +
+            u2t * Math.sin(radianAngle - Math.PI / 2);
+
+        // Возвращаем новые скорости для обоих шаров
+        return {
+            v1x: u1x,
+            v1y: u1y,
+            v2x: u2x,
+            v2y: u2y,
+        };
+    }
     /**
      * Calculates the new x-speed after a collision.
      * @param {Object} obj1 - The first object.
@@ -179,12 +245,14 @@ class Physics {
      * @returns {number} The new x-speed after the collision.
      */
     getNewXSpeed(obj1, obj2, angle) {
-        let xSpeed =
-            (Math.cos((angle * Math.PI) / 180) *
-                (obj1.coefficientX + obj2.coefficientX)) /
-            2;
+        let h = obj1.getX() - obj2.getX();
+        let r = obj1.size / 2 + obj2.size / 2;
+        let beta = Math.asin(h/(2 * r));
+        let xSpeed = beta * (obj1.speedX + obj2.speedX);
+        console.log(xSpeed)
         return xSpeed;
     }
+
     /**
      * Calculates the new x-speed after a collision.
      * @param {Object} obj1 - The first object.
@@ -193,16 +261,18 @@ class Physics {
      * @returns {number} The new x-speed after the collision.
      */
     getNewYSpeed(obj1, obj2, angle) {
-        let ySpeed =
-            (Math.sin((angle * Math.PI) / 180) *
-                (obj1.coefficientY + obj2.coefficientY)) /
-            2;
+        let h = obj1.getY() - obj2.getY();
+        let r = obj1.size + obj2.size;
+        let beta = Math.asin(h/(2 * r));
+        let ySpeed = beta * (obj1.speedY + obj2.speedY);
+        console.log(ySpeed)
         return ySpeed;
     }
+
 }
 
 class Particle {
-    constructor(container, x, y, speedX, speedY, size) {
+    constructor(container, x, y, speedX, speedY, size, mass) {
         this.size = size;
         this.container = container;
         this.element = document.createElement("div");
@@ -221,6 +291,7 @@ class Particle {
         this.coefficientY = speedY;
         this.speedX = speedX;
         this.speedY = speedY;
+        this.mass = mass;
 
         // Modal window
         this.modalOpen = false;
@@ -275,6 +346,13 @@ class Particle {
     // Get Y position of the particle
     getY() {
         return Number(this.element.style.top.slice(0, -2)) + this.size / 2;
+    }
+
+    setX(x) {
+        this.element.style.left = x - this.size / 2 + "px";
+    }
+    setY(y) {
+        this.element.style.top = y - this.size / 2 + "px";
     }
 
     // Show modal with particle information
@@ -343,22 +421,18 @@ class Particle {
         if (left + this.size > this.containerWidth) {
             this.element.style.left = this.containerWidth - this.size + "px";
             this.speedX = -this.speedX;
-            console.log("wall");
         }
         if (left < 0) {
             this.element.style.left = 0;
             this.speedX = -this.speedX;
-            console.log("wall");
         }
         if (top + this.size > this.containerHeight) {
             this.element.style.top = this.containerHeight - this.size + "px";
             this.speedY = -this.speedY;
-            console.log("wall");
         }
         if (top < 0) {
             this.element.style.top = 0;
             this.speedY = -this.speedY;
-            console.log("wall");
         }
         requestAnimationFrame(this.update);
     };
@@ -385,7 +459,8 @@ for (let i = 0; i < 2; i++) {
             getYPos(),
             getSpeed(),
             getSpeed(),
-            50
+            200,
+            1
         )
     );
 }

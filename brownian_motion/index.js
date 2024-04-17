@@ -261,6 +261,7 @@ class Particle {
             }
         });
 
+        // Update animation
         this.update();
     }
 

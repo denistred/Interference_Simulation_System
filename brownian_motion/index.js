@@ -228,27 +228,43 @@ class Particle {
         this.speedX = speedX;
         this.speedY = speedY;
 
+        // Modal window
+        this.modalOpen = false;
         this.modal = document.createElement("div");
-
         this.modal.className = "modal";
-
+        this.modal.style.height = "200px";
+        this.modal.style.width = "225px";
         this.content = document.createElement("div");
         this.content.className = "modal-content";
-
         this.containerWidth = window.innerWidth;
         this.containerHeight = this.container.offsetHeight;
 
-        this.element.addEventListener("click", () => {
-            this.showModal();
-            this.highlightParticle();
+        // Event listeners
+        this.container.addEventListener("click", (event) => {
+            if (event.target === this.container && this.modalOpen) {
+                this.hideModal();
+                this.backToOriginalColor();
+            }
         });
-        this.modal.addEventListener("click", () => {
-            this.hideModal();
-            this.backToOriginalColor();
+        this.element.addEventListener("click", () => {
+            if (!this.modalOpen) {
+                this.showModal();
+                this.highlightParticle();
+            } else {
+                if (Particle.selectedParticle !== this) {
+                    Particle.selectedParticle.hideModal(); 
+                    Particle.selectedParticle.backToOriginalColor();
+                    Particle.selectedParticle = this; 
+                    this.showModal(); 
+                    this.highlightParticle(); 
+                }
+            }
         });
 
         this.update();
     }
+
+    // Set size of the particle
     setSize(size) {
         this.size = size;
         this.element.style.width = size + "px";
@@ -256,15 +272,18 @@ class Particle {
         this.element.style.borderRadius = size / 2 + "px";
     }
 
+    // Get X position of the particle
     getX() {
         return Number(this.element.style.left.slice(0, -2));
     }
+
+    // Get Y position of the particle
     getY() {
         return Number(this.element.style.top.slice(0, -2));
     }
 
+    // Show modal with particle information
     showModal() {
-        console.log("here");
         this.content.innerHTML = `
         <p> Скорость X: ${this.speedX}</p>
         <p> Скорость Y: ${this.speedY}</p>
@@ -273,21 +292,30 @@ class Particle {
         this.modal.appendChild(this.content);
         document.body.appendChild(this.modal);
         this.modal.style.display = "block";
+        this.modalOpen = true;
     }
-
+    
     highlightParticle() {
+        if (Particle.selectedParticle && Particle.selectedParticle !== this) {
+            Particle.selectedParticle.backToOriginalColor();
+        }
+        Particle.selectedParticle = this;
         this.element.style.backgroundColor = "green";
     }
 
+    // Reset color of the particle
     backToOriginalColor() {
         this.element.style.backgroundColor = "rgb(0, 0, 255)";
     }
 
+    // Hide modal window
     hideModal() {
+        this.modalOpen = false;
         this.modal.style.display = "none";
         document.body.removeChild(this.modal);
     }
 
+    // Update particle position and color
     update = () => {
         let left = this.getX();
         let top = this.getY();
@@ -336,6 +364,9 @@ class Particle {
         requestAnimationFrame(this.update);
     };
 }
+
+// Static property to hold the selected particle
+Particle.selectedParticle = null;
 
 let getXPos = () => {
     return Math.random() * (window.innerWidth - 100);

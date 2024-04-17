@@ -6,11 +6,12 @@ class Grid {
         let cells = [];
         this.cells = cells;
         // Инициализация сетки
-        for (var i = 0; i < parseInt(this.width / this.cellSize) + 1; i++) {
+        console.log(this.width, this.cellSize);
+        for (var i = 0; i < parseInt(this.width / this.cellSize) + 2; i++) {
             this.cells[i] = [];
             for (
                 var j = 0;
-                j < parseInt(this.height / this.cellSize) + 1;
+                j < parseInt(this.height / this.cellSize) + 2;
                 j++
             ) {
                 this.cells[i][j] = [];
@@ -101,8 +102,8 @@ class Physics {
         for (const circle of circles) {
             // Получаем список объектов в той же или соседних ячейках
             const neighbors = this.grid.getObjectsInArea(
-                circle.getX() - circle.size / 2,
-                circle.getY() - circle.size / 2,
+                circle.getX(),
+                circle.getY(),
                 circle.size
             );
 
@@ -134,6 +135,7 @@ class Physics {
                             circle,
                             angle
                         );
+                        console.log("collision");
                     }
                 }
             }
@@ -148,16 +150,8 @@ class Physics {
      */
     distance(obj1, obj2) {
         return Math.sqrt(
-            Math.pow(
-                Number(obj1.element.style.left.slice(0, -2)) -
-                    Number(obj2.element.style.left.slice(0, -2)),
-                2
-            ) +
-                Math.pow(
-                    Number(obj1.element.style.top.slice(0, -2)) -
-                        Number(obj2.element.style.top.slice(0, -2)),
-                    2
-                )
+            Math.pow(obj1.getX() - obj2.getX(), 2) +
+                Math.pow(obj1.getY() - obj2.getY(), 2)
         );
     }
     /**
@@ -232,7 +226,7 @@ class Particle {
         this.modalOpen = false;
         this.modal = document.createElement("div");
         this.modal.className = "modal";
-        this.modal.style.height = "200px";
+        this.modal.style.height = "235px";
         this.modal.style.width = "225px";
         this.content = document.createElement("div");
         this.content.className = "modal-content";
@@ -252,11 +246,11 @@ class Particle {
                 this.highlightParticle();
             } else {
                 if (Particle.selectedParticle !== this) {
-                    Particle.selectedParticle.hideModal(); 
+                    Particle.selectedParticle.hideModal();
                     Particle.selectedParticle.backToOriginalColor();
-                    Particle.selectedParticle = this; 
-                    this.showModal(); 
-                    this.highlightParticle(); 
+                    Particle.selectedParticle = this;
+                    this.showModal();
+                    this.highlightParticle();
                 }
             }
         });
@@ -275,12 +269,12 @@ class Particle {
 
     // Get X position of the particle
     getX() {
-        return Number(this.element.style.left.slice(0, -2));
+        return Number(this.element.style.left.slice(0, -2)) + this.size / 2;
     }
 
     // Get Y position of the particle
     getY() {
-        return Number(this.element.style.top.slice(0, -2));
+        return Number(this.element.style.top.slice(0, -2)) + this.size / 2;
     }
 
     // Show modal with particle information
@@ -295,7 +289,7 @@ class Particle {
         this.modal.style.display = "block";
         this.modalOpen = true;
     }
-    
+
     highlightParticle() {
         if (Particle.selectedParticle && Particle.selectedParticle !== this) {
             Particle.selectedParticle.backToOriginalColor();
@@ -318,8 +312,8 @@ class Particle {
 
     // Update particle position and color
     update = () => {
-        let left = this.getX();
-        let top = this.getY();
+        let left = Number(this.element.style.left.slice(0, -2));
+        let top = Number(this.element.style.top.slice(0, -2));
 
         this.element.style.left = left + this.speedX + "px";
         this.element.style.top = top + this.speedY + "px";
@@ -349,18 +343,22 @@ class Particle {
         if (left + this.size > this.containerWidth) {
             this.element.style.left = this.containerWidth - this.size + "px";
             this.speedX = -this.speedX;
+            console.log("wall");
         }
         if (left < 0) {
             this.element.style.left = 0;
             this.speedX = -this.speedX;
+            console.log("wall");
         }
         if (top + this.size > this.containerHeight) {
             this.element.style.top = this.containerHeight - this.size + "px";
             this.speedY = -this.speedY;
+            console.log("wall");
         }
         if (top < 0) {
             this.element.style.top = 0;
             this.speedY = -this.speedY;
+            console.log("wall");
         }
         requestAnimationFrame(this.update);
     };
@@ -379,7 +377,7 @@ let getSpeed = () => {
     return Math.random() * 5;
 };
 let particles = [];
-for (let i = 0; i < 30; i++) {
+for (let i = 0; i < 2; i++) {
     particles.push(
         new Particle(
             document.getElementById("particle-container"),

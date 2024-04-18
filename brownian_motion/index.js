@@ -112,19 +112,40 @@ class Physics {
                     neighbor !== circle &&
                     this.distance(neighbor, circle) < circle.size
                 ) {
+                    // const overlapDistance =
+                    //     circle.size / 2 +
+                    //     neighbor.size / 2 -
+                    //     this.distance(circle, neighbor);
+                    // const dx =
+                    //     (circle.getX() - neighbor.getX()) *
+                    //     (overlapDistance / this.distance(circle, neighbor));
+                    // const dy =
+                    //     (circle.getY() - neighbor.getY()) *
+                    //     (overlapDistance / this.distance(circle, neighbor));
+
+                    // circle.element.left = circle.getX() + dx;
+                    // circle.element.top = circle.getY() + dy;
+                    // neighbor.element.left = neighbor.getX() - dx;
+                    // neighbor.element.top = neighbor.getY() - dy;
                     let angle = this.getAngleOfCollision(circle, neighbor);
-                    circle.speedX = this.getNewXSpeed(circle, neighbor, angle);
-                    circle.speedY = this.getNewYSpeed(circle, neighbor, angle);
-                    neighbor.speedX = this.getNewXSpeed(
-                        neighbor,
-                        circle,
-                        angle
-                    );
-                    neighbor.speedY = this.getNewYSpeed(
-                        neighbor,
-                        circle,
-                        angle
-                    );
+                    this.calculateSpeed(circle, neighbor);
+                    // let speed1 = this.getNewXSpeed(circle, neighbor, angle);
+                    // let speed2 = this.getNewYSpeed(circle, neighbor, angle);
+                    // let speed3 = -this.getNewXSpeed(
+                    //     neighbor,
+                    //     circle,
+                    //     angle
+                    // );
+                    // let speed4 = -this.getNewYSpeed(
+                    //     neighbor,
+                    //     circle,
+                    //     angle
+                    // );
+                    // circle.speedX = speed1;
+                    // circle.speedY = speed2;
+                    // neighbor.speedX = speed3;
+                    // neighbor.speedY = speed4;
+
                     // circle.speedX = this.calculateCollision(
                     //     circle.speedX,
                     //     circle.speedY,
@@ -195,6 +216,39 @@ class Physics {
         }
         return angle;
     }
+
+    calculateSpeed(ball1, ball2) {
+        const dx = ball2.x - ball1.x;
+        const dy = ball2.y - ball1.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        const angle = Math.atan2(dy, dx);
+
+        // Рассчитываем углы векторов скорости
+        const angle1 = Math.atan2(ball1.vy, ball1.vx);
+        const angle2 = Math.atan2(ball2.vy, ball2.vx);
+
+        // Рассчитываем новые углы векторов скорости после столкновения
+        const newAngle1 = 2 * angle - angle1;
+        const newAngle2 = 2 * angle - angle2;
+
+        // Рассчитываем новые скорости по углам
+        const speed1 = Math.sqrt(ball1.vx * ball1.vx + ball1.vy * ball1.vy);
+        const speed2 = Math.sqrt(ball2.vx * ball2.vx + ball2.vy * ball2.vy);
+
+        ball1.speedX = speed1 * Math.cos(newAngle1);
+        ball1.speedY = speed1 * Math.sin(newAngle1);
+        ball2.speedX = speed2 * Math.cos(newAngle2);
+        ball2.speedY = speed2 * Math.sin(newAngle2);
+
+        // Исправляем положение, чтобы шары не слиплись
+        const overlap = 0.5 * (distance - ball1.radius - ball2.radius);
+        ball1.setX(ball1.getX() - overlap * Math.cos(angle));
+        ball1.setY(ball1.getY() - overlap * Math.sin(angle));
+        ball2.setX(ball2.getX() + overlap * Math.cos(angle));
+        ball2.setY(ball2.getY() + overlap * Math.sin(angle));
+        console.log("Changed");
+    }
+
     calculateCollision(v1x, v1y, v2x, v2y, m1, m2, angle) {
         // Переводим угол в радианы
         let radianAngle = (angle * Math.PI) / 180;
@@ -245,11 +299,11 @@ class Physics {
      * @returns {number} The new x-speed after the collision.
      */
     getNewXSpeed(obj1, obj2, angle) {
-        let h = obj1.getX() - obj2.getX();
+        let h = obj1.getY() - obj2.getY();
         let r = obj1.size / 2 + obj2.size / 2;
-        let beta = Math.asin(h/(2 * r));
-        let xSpeed = beta * (obj1.speedX + obj2.speedX);
-        console.log(xSpeed)
+        let beta = Math.asin(h / (2 * r));
+        let xSpeed = Math.cos(beta) * (obj1.speedX + obj2.speedX);
+        console.log(xSpeed);
         return xSpeed;
     }
 
@@ -262,13 +316,12 @@ class Physics {
      */
     getNewYSpeed(obj1, obj2, angle) {
         let h = obj1.getY() - obj2.getY();
-        let r = obj1.size + obj2.size;
-        let beta = Math.asin(h/(2 * r));
-        let ySpeed = beta * (obj1.speedY + obj2.speedY);
-        console.log(ySpeed)
+        let r = obj1.size / 2 + obj2.size / 2;
+        let beta = Math.asin(h / (2 * r));
+        let ySpeed = Math.sin(beta) * (obj1.speedY + obj2.speedY);
+        console.log(ySpeed);
         return ySpeed;
     }
-
 }
 
 class Particle {

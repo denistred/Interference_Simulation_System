@@ -62,14 +62,12 @@ class Grid {
 class Physics {
     constructor(container, circles) {
         this.circles = circles;
-
         this.container = container;
         this.grid = new Grid(
             window.innerWidth,
             this.container.offsetHeight,
             20
         );
-
         this.updateTimer = setInterval(
             () => this.update(this.circles),
             1000 / 60
@@ -107,12 +105,7 @@ class Physics {
                     this.distance(neighbor, circle) < circle.size
                 ) {
                     const angle = this.getAngleOfCollision(circle, neighbor);
-                    const newXSpeeds = this.getNewXSpeed(circle, neighbor, angle);
-                    const newYSpeeds = this.getNewYSpeed(circle, neighbor, angle);
-                    circle.speedX = newXSpeeds.obj1_speed;
-                    circle.speedY = newYSpeeds.obj1_speed;
-                    neighbor.speedX = newXSpeeds.obj2_speed;
-                    neighbor.speedY = newYSpeeds.obj2_speed;
+                    this.handleCollision(circle, neighbor, angle);
                 }
             }
         }
@@ -137,106 +130,50 @@ class Physics {
         return angle;
     }
 
-    getNewXSpeed(obj1, obj2, angle) {
+    handleCollision(obj1, obj2, angle) {
+        console.log("here");
         let x1 = obj1.getX();
         let x2 = obj2.getX();
-        let r1 = obj1.size / 2;
-        let r2 = obj2.size / 2;
-        let dx1 = obj1.speedX;
-        let dx2 = obj2.speedX;
-        let Dx = x1 - x2;
-
-        let d = Math.abs(Dx);
-        if (d === 0) {
-            d = 0.01;
-        }
-        let s = Dx / d;
-
-        if (d < r1 + r2) {
-            let Vn1 = dx2 * s;
-            let Vn2 = dx1 * s;
-
-            if (Vn1 > 0.6) {
-                Vn1 = 0.6;
-            }
-            if (Vn1 < -0.6) {
-                Vn1 = -0.6;
-            }
-            if (Vn2 > 0.6) {
-                Vn2 = 0.6;
-            }
-            if (Vn2 < -0.6) {
-                Vn2 = -0.6;
-            }
-
-            let o = Vn2;
-            Vn2 = Vn1;
-            Vn1 = o;
-
-            let new_dx1 = Vn2;
-            let new_dx2 = Vn1;
-
-            return {
-                obj1_speed: new_dx1,
-                obj2_speed: new_dx2
-            };
-        }
-        return {
-            obj1_speed: obj1.speedX,
-            obj2_speed: obj2.speedX
-        };
-    }
-
-    getNewYSpeed(obj1, obj2, angle) {
         let y1 = obj1.getY();
         let y2 = obj2.getY();
         let r1 = obj1.size / 2;
         let r2 = obj2.size / 2;
-        let dy1 = obj1.speedY;
-        let dy2 = obj2.speedY;
-        let Dy = y1 - y2;
+        let speedX1 = obj1.speedX;
+        let speedX2 = obj2.speedX;
+        let speed1 = obj1.speedY;
+        let speed2 = obj2.speedY;
 
-        let d = Math.abs(Dy);
-        if (d === 0) {
-            d = 0.01;
+        let dx = x2 - x1;
+        let dy = y2 - y1;
+        let distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance === 0) {
+            distance = 0.01
         }
-        let e = Dy / d;
 
-        if (d < r1 + r2) {
-            let Vn1 = dy2 * e;
-            let Vn2 = dy1 * e;
+        if (distance < r1 + r2) {
+            console.log("hit");
 
-            if (Vn1 > 0.6) {
-                Vn1 = 0.6;
-            }
-            if (Vn1 < -0.6) {
-                Vn1 = -0.6;
-            }
-            if (Vn2 > 0.6) {
-                Vn2 = 0.6;
-            }
-            if (Vn2 < -0.6) {
-                Vn2 = -0.6;
-            }
+            
+            const nx = dx / distance;
+            const ny = dy / distance;
 
-            let o = Vn2;
-            Vn2 = Vn1;
-            Vn1 = o;
+            const v1n = nx * speedX1 + ny * speed1;
+            const v1t = -ny * speedX1 + nx * speed1;
+            const v2n = nx * speedX2 + ny * speed2;
+            const v2t = -ny * speedX2 + nx * speed2;
 
-            let new_dy1 = Vn2;
-            let new_dy2 = Vn1;
+            const newV1n = v2n;
+            const newV2n = v1n;
 
-            return {
-                obj1_speed: new_dy1,
-                obj2_speed: new_dy2
-            };
+            obj1.speedX = nx * newV1n + (-ny) * v1t;
+            obj1.speedY = ny * newV1n + nx * v1t;
+            obj2.speedX = nx * newV2n + (-ny) * v2t;
+            obj2.speedY = ny * newV2n + nx * v2t;
         }
-        return {
-            obj1_speed: obj1.speedY,
-            obj2_speed: obj2.speedY
-        };
     }
 }
+
 
 
 class Particle {

@@ -91,26 +91,30 @@ class Physics {
             const y = circle.getY();
             this.grid.addObject(circle, x, y);
         });
-
+    
         for (const circle of circles) {
             const neighbors = this.grid.getObjectsInArea(
                 circle.getX(),
                 circle.getY(),
                 circle.size
             );
-
+    
             for (const neighbor of neighbors) {
                 if (
                     neighbor !== circle &&
                     this.distance(neighbor, circle) < circle.size
                 ) {
                     const angle = this.getAngleOfCollision(circle, neighbor);
-                    this.handleCollision(circle, neighbor, angle);
+                    const { obj1, obj2 } = this.handleCollision(circle, neighbor, angle);
+                    circle.speedX = obj1.speedX;
+                    circle.speedY = obj1.speedY;
+                    neighbor.speedX = obj2.speedX;
+                    neighbor.speedY = obj2.speedY;
                 }
             }
         }
     }
-
+    
     distance(obj1, obj2) {
         return Math.sqrt(
             Math.pow(obj1.getX() - obj2.getX(), 2) +
@@ -131,7 +135,6 @@ class Physics {
     }
 
     handleCollision(obj1, obj2, angle) {
-        console.log("here");
         let x1 = obj1.getX();
         let x2 = obj2.getX();
         let y1 = obj1.getY();
@@ -142,37 +145,76 @@ class Physics {
         let speedX2 = obj2.speedX;
         let speed1 = obj1.speedY;
         let speed2 = obj2.speedY;
-
+    
         let dx = x2 - x1;
         let dy = y2 - y1;
         let distance = Math.sqrt(dx * dx + dy * dy);
-
+    
         if (distance === 0) {
-            distance = 0.01
+            distance = 0.01;
         }
-
-        if (distance < r1 + r2) {
+    
+        if (distance <= r1 + r2) {        
             console.log("hit");
-
-            
+    
             const nx = dx / distance;
             const ny = dy / distance;
-
+    
             const v1n = nx * speedX1 + ny * speed1;
             const v1t = -ny * speedX1 + nx * speed1;
             const v2n = nx * speedX2 + ny * speed2;
             const v2t = -ny * speedX2 + nx * speed2;
-
-            const newV1n = v2n;
-            const newV2n = v1n;
-
+    
+            const newV1n = -v1n;
+            const newV2n = -v2n;
+    
             obj1.speedX = nx * newV1n + (-ny) * v1t;
             obj1.speedY = ny * newV1n + nx * v1t;
             obj2.speedX = nx * newV2n + (-ny) * v2t;
             obj2.speedY = ny * newV2n + nx * v2t;
+    
+            obj1.updatePosition();
+            obj2.updatePosition();
+    
+            while (distance <= r1 + r2);
+            
+            return { obj1, obj2 };
         }
+    
+        return { obj1, obj2 };
+    }
+
+
+}
+
+class Circle {
+    constructor(element, size, speedX, speedY) {
+        this.element = element;
+        this.size = size;
+        this.speedX = speedX;
+        this.speedY = speedY;
+        this.x = parseInt(element.style.left);
+        this.y = parseInt(element.style.top);
+        this.state = 'usual'; // Изначальное состояние - обычное
+    }
+
+    getX() {
+        return this.x;
+    }
+
+    getY() {
+        return this.y;
+    }
+
+    updatePosition() {
+        this.x += this.speedX;
+        this.y += this.speedY;
+        this.element.style.left = this.x + "px";
+        this.element.style.top = this.y + "px";
     }
 }
+
+
 
 
 

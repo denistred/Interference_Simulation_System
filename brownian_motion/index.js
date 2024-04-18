@@ -75,115 +75,56 @@ class Physics {
             1000 / 60
         );
     }
+
     fillGrid() {
-        particles.forEach((particle) => {
-            this.grid.addObject(particle, particle.getX(), particle.getY());
+        this.circles.forEach((circle) => {
+            this.grid.addObject(circle, circle.getX(), circle.getY());
         });
     }
 
     clearGrid() {
         this.grid.clear();
     }
-    /**
-     * Updates the positions and velocities of all circles in the game.
-     * @param {Array<Circle>} circles - An array of all circles in the game.
-     */
-    update = (circles) => {
+
+    update(circles) {
         this.grid.clear();
-        // Добавляем все круги в сетку
         circles.forEach((circle) => {
             const x = circle.getX();
             const y = circle.getY();
             this.grid.addObject(circle, x, y);
         });
 
-        // Проходимся по каждому кругу и проверяем столкновения только с объектами в той же или соседних ячейках
         for (const circle of circles) {
-            // Получаем список объектов в той же или соседних ячейках
             const neighbors = this.grid.getObjectsInArea(
                 circle.getX(),
                 circle.getY(),
                 circle.size
             );
 
-            // Проверяем столкновения только с объектами в сетке
             for (const neighbor of neighbors) {
                 if (
                     neighbor !== circle &&
                     this.distance(neighbor, circle) < circle.size
                 ) {
-                    let angle = this.getAngleOfCollision(circle, neighbor);
-                    circle.speedX = this.getNewXSpeed(circle, neighbor, angle);
-                    circle.speedY = this.getNewYSpeed(circle, neighbor, angle);
-                    neighbor.speedX = this.getNewXSpeed(
-                        neighbor,
-                        circle,
-                        angle
-                    );
-                    neighbor.speedY = this.getNewYSpeed(
-                        neighbor,
-                        circle,
-                        angle
-                    );
-                    // circle.speedX = this.calculateCollision(
-                    //     circle.speedX,
-                    //     circle.speedY,
-                    //     neighbor.speedX,
-                    //     neighbor.speedY,
-                    //     circle.mass,
-                    //     neighbor.mass,
-                    //     angle
-                    // ).v1x;
-                    // circle.speedY = this.calculateCollision(
-                    //     circle.speedX,
-                    //     circle.speedY,
-                    //     neighbor.speedX,
-                    //     neighbor.speedY,
-                    //     circle.mass,
-                    //     neighbor.mass,
-                    //     angle
-                    // ).v1y;
-                    // neighbor.speedX = this.calculateCollision(
-                    //     circle.speedX,
-                    //     circle.speedY,
-                    //     neighbor.speedX,
-                    //     neighbor.speedY,
-                    //     circle.mass,
-                    //     neighbor.mass,
-                    //     angle
-                    // ).v2x;
-                    // neighbor.speedY = this.calculateCollision(
-                    //     circle.speedX,
-                    //     circle.speedY,
-                    //     neighbor.speedX,
-                    //     neighbor.speedY,
-                    //     circle.mass,
-                    //     neighbor.mass,
-                    //     angle
-                    // ).v2y;
+                    const angle = this.getAngleOfCollision(circle, neighbor);
+                    const newXSpeeds = this.getNewXSpeed(circle, neighbor, angle);
+                    const newYSpeeds = this.getNewYSpeed(circle, neighbor, angle);
+                    circle.speedX = newXSpeeds.obj1_speed;
+                    circle.speedY = newYSpeeds.obj1_speed;
+                    neighbor.speedX = newXSpeeds.obj2_speed;
+                    neighbor.speedY = newYSpeeds.obj2_speed;
                 }
             }
         }
-    };
+    }
 
-    /**
-     * Calculates the distance between two objects.
-     * @param {Object} obj1 - The first object.
-     * @param {Object} obj2 - The second object.
-     * @returns {number} The distance between the two objects.
-     */
     distance(obj1, obj2) {
         return Math.sqrt(
             Math.pow(obj1.getX() - obj2.getX(), 2) +
-                Math.pow(obj1.getY() - obj2.getY(), 2)
+            Math.pow(obj1.getY() - obj2.getY(), 2)
         );
     }
-    /**
-     * Calculates the angle of collision between two objects.
-     * @param {Object} obj1 - The first object.
-     * @param {Object} obj2 - The second object.
-     * @returns {number} The angle of collision in degrees.
-     */
+
     getAngleOfCollision(obj1, obj2) {
         let x1 = Number(obj1.element.style.left.slice(0, -2));
         let y1 = Number(obj1.element.style.top.slice(0, -2));
@@ -195,81 +136,108 @@ class Physics {
         }
         return angle;
     }
-    calculateCollision(v1x, v1y, v2x, v2y, m1, m2, angle) {
-        // Переводим угол в радианы
-        let radianAngle = (angle * Math.PI) / 180;
 
-        // Вычисляем скорости вдоль оси столкновения
-        let v1n = v1x * Math.cos(radianAngle) + v1y * Math.sin(radianAngle);
-        let v2n = v2x * Math.cos(radianAngle) + v2y * Math.sin(radianAngle);
+    getNewXSpeed(obj1, obj2, angle) {
+        let x1 = obj1.getX();
+        let x2 = obj2.getX();
+        let r1 = obj1.size / 2;
+        let r2 = obj2.size / 2;
+        let dx1 = obj1.speedX;
+        let dx2 = obj2.speedX;
+        let Dx = x1 - x2;
 
-        // Вычисляем новые скорости после столкновения (по оси столкновения)
-        let u1n = (v1n * (m1 - m2) + 2 * m2 * v2n) / (m1 + m2);
-        let u2n = (v2n * (m2 - m1) + 2 * m1 * v1n) / (m1 + m2);
+        let d = Math.abs(Dx);
+        if (d === 0) {
+            d = 0.01;
+        }
+        let s = Dx / d;
 
-        // Вычисляем скорости после столкновения вдоль оси перпендикулярной столкновению (остаются неизменными)
-        let u1t =
-            v1x * Math.cos(radianAngle - Math.PI / 2) +
-            v1y * Math.sin(radianAngle - Math.PI / 2);
-        let u2t =
-            v2x * Math.cos(radianAngle - Math.PI / 2) +
-            v2y * Math.sin(radianAngle - Math.PI / 2);
+        if (d < r1 + r2) {
+            let Vn1 = dx2 * s;
+            let Vn2 = dx1 * s;
 
-        // Обратно преобразуем скорости после столкновения
-        let u1x =
-            u1n * Math.cos(radianAngle) +
-            u1t * Math.cos(radianAngle - Math.PI / 2);
-        let u1y =
-            u1n * Math.sin(radianAngle) +
-            u1t * Math.sin(radianAngle - Math.PI / 2);
-        let u2x =
-            u2n * Math.cos(radianAngle) +
-            u2t * Math.cos(radianAngle - Math.PI / 2);
-        let u2y =
-            u2n * Math.sin(radianAngle) +
-            u2t * Math.sin(radianAngle - Math.PI / 2);
+            if (Vn1 > 0.6) {
+                Vn1 = 0.6;
+            }
+            if (Vn1 < -0.6) {
+                Vn1 = -0.6;
+            }
+            if (Vn2 > 0.6) {
+                Vn2 = 0.6;
+            }
+            if (Vn2 < -0.6) {
+                Vn2 = -0.6;
+            }
 
-        // Возвращаем новые скорости для обоих шаров
+            let o = Vn2;
+            Vn2 = Vn1;
+            Vn1 = o;
+
+            let new_dx1 = Vn2;
+            let new_dx2 = Vn1;
+
+            return {
+                obj1_speed: new_dx1,
+                obj2_speed: new_dx2
+            };
+        }
         return {
-            v1x: u1x,
-            v1y: u1y,
-            v2x: u2x,
-            v2y: u2y,
+            obj1_speed: obj1.speedX,
+            obj2_speed: obj2.speedX
         };
     }
-    /**
-     * Calculates the new x-speed after a collision.
-     * @param {Object} obj1 - The first object.
-     * @param {Object} obj2 - The second object.
-     * @param {number} angle - The angle of collision in degrees.
-     * @returns {number} The new x-speed after the collision.
-     */
-    getNewXSpeed(obj1, obj2, angle) {
-        let h = obj1.getX() - obj2.getX();
-        let r = obj1.size / 2 + obj2.size / 2;
-        let beta = Math.asin(h/(2 * r));
-        let xSpeed = beta * (obj1.speedX + obj2.speedX);
-        console.log(xSpeed)
-        return xSpeed;
-    }
 
-    /**
-     * Calculates the new x-speed after a collision.
-     * @param {Object} obj1 - The first object.
-     * @param {Object} obj2 - The second object.
-     * @param {number} angle - The angle of collision in degrees.
-     * @returns {number} The new x-speed after the collision.
-     */
     getNewYSpeed(obj1, obj2, angle) {
-        let h = obj1.getY() - obj2.getY();
-        let r = obj1.size + obj2.size;
-        let beta = Math.asin(h/(2 * r));
-        let ySpeed = beta * (obj1.speedY + obj2.speedY);
-        console.log(ySpeed)
-        return ySpeed;
-    }
+        let y1 = obj1.getY();
+        let y2 = obj2.getY();
+        let r1 = obj1.size / 2;
+        let r2 = obj2.size / 2;
+        let dy1 = obj1.speedY;
+        let dy2 = obj2.speedY;
+        let Dy = y1 - y2;
 
+        let d = Math.abs(Dy);
+        if (d === 0) {
+            d = 0.01;
+        }
+        let e = Dy / d;
+
+        if (d < r1 + r2) {
+            let Vn1 = dy2 * e;
+            let Vn2 = dy1 * e;
+
+            if (Vn1 > 0.6) {
+                Vn1 = 0.6;
+            }
+            if (Vn1 < -0.6) {
+                Vn1 = -0.6;
+            }
+            if (Vn2 > 0.6) {
+                Vn2 = 0.6;
+            }
+            if (Vn2 < -0.6) {
+                Vn2 = -0.6;
+            }
+
+            let o = Vn2;
+            Vn2 = Vn1;
+            Vn1 = o;
+
+            let new_dy1 = Vn2;
+            let new_dy2 = Vn1;
+
+            return {
+                obj1_speed: new_dy1,
+                obj2_speed: new_dy2
+            };
+        }
+        return {
+            obj1_speed: obj1.speedY,
+            obj2_speed: obj2.speedY
+        };
+    }
 }
+
 
 class Particle {
     constructor(container, x, y, speedX, speedY, size, mass) {

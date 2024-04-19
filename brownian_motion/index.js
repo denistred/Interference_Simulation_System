@@ -91,21 +91,25 @@ class Physics {
             const y = circle.getY();
             this.grid.addObject(circle, x, y);
         });
-    
+
         for (const circle of circles) {
             const neighbors = this.grid.getObjectsInArea(
                 circle.getX(),
                 circle.getY(),
                 circle.size
             );
-    
+
             for (const neighbor of neighbors) {
                 if (
                     neighbor !== circle &&
                     this.distance(neighbor, circle) < circle.size
                 ) {
                     const angle = this.getAngleOfCollision(circle, neighbor);
-                    const { obj1, obj2 } = this.handleCollision(circle, neighbor, angle);
+                    const { obj1, obj2 } = this.handleCollision(
+                        circle,
+                        neighbor,
+                        angle
+                    );
                     circle.speedX = obj1.speedX;
                     circle.speedY = obj1.speedY;
                     neighbor.speedX = obj2.speedX;
@@ -114,11 +118,11 @@ class Physics {
             }
         }
     }
-    
+
     distance(obj1, obj2) {
         return Math.sqrt(
             Math.pow(obj1.getX() - obj2.getX(), 2) +
-            Math.pow(obj1.getY() - obj2.getY(), 2)
+                Math.pow(obj1.getY() - obj2.getY(), 2)
         );
     }
 
@@ -133,6 +137,16 @@ class Physics {
         }
         return angle;
     }
+    checkOverlap(obj1, obj2) {
+        let dist = this.distance(obj1, obj2);
+        let overlap = obj1.size / 2 + obj2.size / 2 - this.distance(obj1, obj2);
+        dx = obj1.getX() - obj2.getX();
+        dy = obj2.getY() - obj1.getY();
+        obj1.setX(obj1.getX() + dx);
+        obj2.setX(obj2.getX() - dx);
+        obj1.setY(obj1.getY() + dy);
+        obj2.setY(obj2.getY() - dy);
+    }
 
     handleCollision(obj1, obj2, angle) {
         let x1 = obj1.getX();
@@ -145,46 +159,42 @@ class Physics {
         let speedX2 = obj2.speedX;
         let speed1 = obj1.speedY;
         let speed2 = obj2.speedY;
-    
+
         let dx = x2 - x1;
         let dy = y2 - y1;
         let distance = Math.sqrt(dx * dx + dy * dy);
-    
+
         if (distance === 0) {
             distance = 0.01;
         }
-    
-        if (distance <= r1 + r2) {        
+
+        while (distance <= r1 + r2) {
             console.log("hit");
-    
+
             const nx = dx / distance;
             const ny = dy / distance;
-    
+
             const v1n = nx * speedX1 + ny * speed1;
             const v1t = -ny * speedX1 + nx * speed1;
             const v2n = nx * speedX2 + ny * speed2;
             const v2t = -ny * speedX2 + nx * speed2;
-    
+
             const newV1n = -v1n;
             const newV2n = -v2n;
-    
-            obj1.speedX = nx * newV1n + (-ny) * v1t;
+
+            obj1.speedX = nx * newV1n + -ny * v1t;
             obj1.speedY = ny * newV1n + nx * v1t;
-            obj2.speedX = nx * newV2n + (-ny) * v2t;
+            obj2.speedX = nx * newV2n + -ny * v2t;
             obj2.speedY = ny * newV2n + nx * v2t;
-    
+
             obj1.updatePosition();
             obj2.updatePosition();
-    
-            while (distance <= r1 + r2);
-            
+
             return { obj1, obj2 };
         }
-    
+
         return { obj1, obj2 };
     }
-
-
 }
 
 class Circle {
@@ -193,9 +203,9 @@ class Circle {
         this.size = size;
         this.speedX = speedX;
         this.speedY = speedY;
-        this.x = parseInt(element.style.left);
-        this.y = parseInt(element.style.top);
-        this.state = 'usual'; // Изначальное состояние - обычное
+        this.x = parseInt(this.element.style.left);
+        this.y = parseInt(this.element.style.top);
+        this.state = "usual"; // Изначальное состояние - обычное
     }
 
     getX() {
@@ -207,22 +217,24 @@ class Circle {
     }
 
     updatePosition() {
+        console.log("Update");
+        this.x = parseInt(this.element.style.left);
+        this.y = parseInt(this.element.style.top);
         this.x += this.speedX;
         this.y += this.speedY;
+
         this.element.style.left = this.x + "px";
         this.element.style.top = this.y + "px";
     }
 }
 
-
-
-
-
-class Particle {
+class Particle extends Circle {
     constructor(container, x, y, speedX, speedY, size, mass) {
-        this.size = size;
+        super(document.createElement("div"), size, speedX, speedY);
+        //this.size = size;
         this.container = container;
-        this.element = document.createElement("div");
+        //this.element = document.createElement("div");
+
         this.container.appendChild(this.element);
 
         // Element style
@@ -236,8 +248,8 @@ class Particle {
         // Physic params
         this.coefficientX = speedX;
         this.coefficientY = speedY;
-        this.speedX = speedX;
-        this.speedY = speedY;
+        //this.speedX = speedX;
+        //this.speedY = speedY;
         this.mass = mass;
 
         // Modal window
@@ -340,8 +352,7 @@ class Particle {
         let left = Number(this.element.style.left.slice(0, -2));
         let top = Number(this.element.style.top.slice(0, -2));
 
-        this.element.style.left = left + this.speedX + "px";
-        this.element.style.top = top + this.speedY + "px";
+        this.updatePosition();
 
         if (this.element.style.backgroundColor !== "green") {
             // Smoothly transition between colors from blue to red based on a variable

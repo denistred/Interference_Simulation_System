@@ -399,10 +399,13 @@ const physics = new Physics(
 document.addEventListener("DOMContentLoaded", function () {
     const particleCountInput = document.getElementById("particle-count");
     const particleSizeInput = document.getElementById("particle-size");
+    const temparatureK = document.getElementById("temperature-k");
+    const velocity = document.getElementById("velocity");
 
     const temperatureInput = document.getElementById("temperature");
     const continueBtn = document.getElementById("continueBtn");
     const stopBtn = document.getElementById("stopBtn");
+    
 
     let prevCount = 30;
     particleCountInput.addEventListener("change", function () {
@@ -458,10 +461,14 @@ document.addEventListener("DOMContentLoaded", function () {
     temperatureInput.addEventListener("input", function () {
         const newTemperature = parseFloat(this.value);
         const newSpeed = calculateSpeed(newTemperature);
+        console.log(newTemperature);
+        const temperatureForParams = parseInt(newTemperature * 50)
+        temparatureK.innerText = `Температура в кельвинах: ${temperatureForParams}`;
         particles.forEach((particle) => {
             particle.coefficientX = newSpeed;
             particle.coefficientY = newSpeed;
         });
+        velocity.innerText = `Скорость в м/с ${Math.sqrt(3 * 8.32 * temperatureForParams)}`
     });
 
     function calculateSpeed(temperature) {

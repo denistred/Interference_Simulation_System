@@ -138,15 +138,35 @@ class Physics {
         return angle;
     }
     checkOverlap(obj1, obj2) {
-        let dist = this.distance(obj1, obj2);
-        let overlap = obj1.size / 2 + obj2.size / 2 - this.distance(obj1, obj2);
-        dx = obj1.getX() - obj2.getX();
-        dy = obj2.getY() - obj1.getY();
-        obj1.setX(obj1.getX() + dx);
-        obj2.setX(obj2.getX() - dx);
-        obj1.setY(obj1.getY() + dy);
-        obj2.setY(obj2.getY() - dy);
+        // Calculate the distance between the centers of the two objects along the x-axis and y-axis
+        const dx = obj2.getX() - obj1.getX();
+        const dy = obj2.getY() - obj1.getY();
+    
+        // Calculate the distance between the centers of the two objects
+        const distance = Math.sqrt(dx * dx + dy * dy);
+    
+        // Calculate the minimum distance required to avoid overlap (sum of radii)
+        const minDistance = obj1.size / 2 + obj2.size / 2;
+    
+        // If there is an overlap
+        if (distance < minDistance) {
+            // Calculate the overlap distance
+            const overlap = minDistance - distance;
+    
+            // Calculate the ratio of movement along each axis to resolve the overlap
+            const moveX = (overlap / distance) * dx;
+            const moveY = (overlap / distance) * dy;
+    
+            // Move obj1 away from obj2
+            obj1.element.style.left = obj1.getX() - moveX + "px";
+            obj1.element.style.top = obj1.getY() - moveY + "px";
+    
+            // Move obj2 away from obj1
+            obj2.element.style.left = obj2.getX() + moveX + "px";
+            obj2.element.style.top = obj2.getY() + moveY + "px";
+        }
     }
+    
 
     handleCollision(obj1, obj2, angle) {
         let x1 = obj1.getX();
@@ -186,7 +206,7 @@ class Physics {
             obj1.speedY = ny * newV1n + nx * v1t;
             obj2.speedX = nx * newV2n + -ny * v2t;
             obj2.speedY = ny * newV2n + nx * v2t;
-
+            // this.checkOverlap(obj1, obj2);
             obj1.updatePosition();
             obj2.updatePosition();
 
@@ -409,7 +429,7 @@ let getSpeed = () => {
     return Math.random() * 5;
 };
 let particles = [];
-for (let i = 0; i < 2; i++) {
+for (let i = 0; i < 30; i++) {
     particles.push(
         new Particle(
             document.getElementById("particle-container"),
@@ -417,7 +437,7 @@ for (let i = 0; i < 2; i++) {
             getYPos(),
             getSpeed(),
             getSpeed(),
-            200,
+            50,
             1
         )
     );

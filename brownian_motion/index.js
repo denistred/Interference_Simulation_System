@@ -62,14 +62,12 @@ class Grid {
 class Physics {
     constructor(container, circles) {
         this.circles = circles;
-
         this.container = container;
         this.grid = new Grid(
             window.innerWidth,
             this.container.offsetHeight,
             20
         );
-
         this.updateTimer = setInterval(
             () => this.update(this.circles),
             1000 / 60
@@ -93,31 +91,30 @@ class Physics {
             const y = circle.getY();
             this.grid.addObject(circle, x, y);
         });
-
+    
         for (const circle of circles) {
             const neighbors = this.grid.getObjectsInArea(
                 circle.getX(),
                 circle.getY(),
                 circle.size
             );
-
+    
             for (const neighbor of neighbors) {
                 if (
                     neighbor !== circle &&
                     this.distance(neighbor, circle) < circle.size
                 ) {
                     const angle = this.getAngleOfCollision(circle, neighbor);
-                    const newXSpeeds = this.getNewXSpeed(circle, neighbor, angle);
-                    const newYSpeeds = this.getNewYSpeed(circle, neighbor, angle);
-                    circle.speedX = newXSpeeds.obj1_speed;
-                    circle.speedY = newYSpeeds.obj1_speed;
-                    neighbor.speedX = newXSpeeds.obj2_speed;
-                    neighbor.speedY = newYSpeeds.obj2_speed;
+                    const { obj1, obj2 } = this.handleCollision(circle, neighbor, angle);
+                    circle.speedX = obj1.speedX;
+                    circle.speedY = obj1.speedY;
+                    neighbor.speedX = obj2.speedX;
+                    neighbor.speedY = obj2.speedY;
                 }
             }
         }
     }
-
+    
     distance(obj1, obj2) {
         return Math.sqrt(
             Math.pow(obj1.getX() - obj2.getX(), 2) +
@@ -137,106 +134,88 @@ class Physics {
         return angle;
     }
 
-    getNewXSpeed(obj1, obj2, angle) {
+    handleCollision(obj1, obj2, angle) {
         let x1 = obj1.getX();
         let x2 = obj2.getX();
-        let r1 = obj1.size / 2;
-        let r2 = obj2.size / 2;
-        let dx1 = obj1.speedX;
-        let dx2 = obj2.speedX;
-        let Dx = x1 - x2;
-
-        let d = Math.abs(Dx);
-        if (d === 0) {
-            d = 0.01;
-        }
-        let s = Dx / d;
-
-        if (d < r1 + r2) {
-            let Vn1 = dx2 * s;
-            let Vn2 = dx1 * s;
-
-            if (Vn1 > 0.6) {
-                Vn1 = 0.6;
-            }
-            if (Vn1 < -0.6) {
-                Vn1 = -0.6;
-            }
-            if (Vn2 > 0.6) {
-                Vn2 = 0.6;
-            }
-            if (Vn2 < -0.6) {
-                Vn2 = -0.6;
-            }
-
-            let o = Vn2;
-            Vn2 = Vn1;
-            Vn1 = o;
-
-            let new_dx1 = Vn2;
-            let new_dx2 = Vn1;
-
-            return {
-                obj1_speed: new_dx1,
-                obj2_speed: new_dx2
-            };
-        }
-        return {
-            obj1_speed: obj1.speedX,
-            obj2_speed: obj2.speedX
-        };
-    }
-
-    getNewYSpeed(obj1, obj2, angle) {
         let y1 = obj1.getY();
         let y2 = obj2.getY();
         let r1 = obj1.size / 2;
         let r2 = obj2.size / 2;
-        let dy1 = obj1.speedY;
-        let dy2 = obj2.speedY;
-        let Dy = y1 - y2;
-
-        let d = Math.abs(Dy);
-        if (d === 0) {
-            d = 0.01;
+        let speedX1 = obj1.speedX;
+        let speedX2 = obj2.speedX;
+        let speed1 = obj1.speedY;
+        let speed2 = obj2.speedY;
+    
+        let dx = x2 - x1;
+        let dy = y2 - y1;
+        let distance = Math.sqrt(dx * dx + dy * dy);
+    
+        if (distance === 0) {
+            distance = 0.01;
         }
-        let e = Dy / d;
-
-        if (d < r1 + r2) {
-            let Vn1 = dy2 * e;
-            let Vn2 = dy1 * e;
-
-            if (Vn1 > 0.6) {
-                Vn1 = 0.6;
-            }
-            if (Vn1 < -0.6) {
-                Vn1 = -0.6;
-            }
-            if (Vn2 > 0.6) {
-                Vn2 = 0.6;
-            }
-            if (Vn2 < -0.6) {
-                Vn2 = -0.6;
-            }
-
-            let o = Vn2;
-            Vn2 = Vn1;
-            Vn1 = o;
-
-            let new_dy1 = Vn2;
-            let new_dy2 = Vn1;
-
-            return {
-                obj1_speed: new_dy1,
-                obj2_speed: new_dy2
-            };
+    
+        if (distance <= r1 + r2) {        
+            console.log("hit");
+    
+            const nx = dx / distance;
+            const ny = dy / distance;
+    
+            const v1n = nx * speedX1 + ny * speed1;
+            const v1t = -ny * speedX1 + nx * speed1;
+            const v2n = nx * speedX2 + ny * speed2;
+            const v2t = -ny * speedX2 + nx * speed2;
+    
+            const newV1n = -v1n;
+            const newV2n = -v2n;
+    
+            obj1.speedX = nx * newV1n + (-ny) * v1t;
+            obj1.speedY = ny * newV1n + nx * v1t;
+            obj2.speedX = nx * newV2n + (-ny) * v2t;
+            obj2.speedY = ny * newV2n + nx * v2t;
+    
+            obj1.updatePosition();
+            obj2.updatePosition();
+    
+            while (distance <= r1 + r2);
+            
+            return { obj1, obj2 };
         }
-        return {
-            obj1_speed: obj1.speedY,
-            obj2_speed: obj2.speedY
-        };
+    
+        return { obj1, obj2 };
+    }
+
+
+}
+
+class Circle {
+    constructor(element, size, speedX, speedY) {
+        this.element = element;
+        this.size = size;
+        this.speedX = speedX;
+        this.speedY = speedY;
+        this.x = parseInt(element.style.left);
+        this.y = parseInt(element.style.top);
+        this.state = 'usual'; // Изначальное состояние - обычное
+    }
+
+    getX() {
+        return this.x;
+    }
+
+    getY() {
+        return this.y;
+    }
+
+    updatePosition() {
+        this.x += this.speedX;
+        this.y += this.speedY;
+        this.element.style.left = this.x + "px";
+        this.element.style.top = this.y + "px";
     }
 }
+
+
+
 
 
 class Particle {
